@@ -1,0 +1,35 @@
+crop,parameter,minimum,maximum,unit,preferred_value_or_description,source_name,source_url,source_notes,confidence,last_checked
+rice,pH,5.0,8.0,pH,Optimal 5.5-6.5; tolerable from 5.0 to 8.0.,FAO Crop Water Information,https://www.fao.org/land-water/databases-chemical-properties/crop-information/en/,Tolerates wide range but acidic clay-loams are ideal.,High,2025-05-15
+rice,temperature,20.0,38.0,C,Optimal range 22-32C; below 15C causes sterile spikelets.,International Rice Research Institute (IRRI),https://www.irri.org,High heat during flowering (>35C) induces spikelet sterility.,High,2025-05-15
+rice,rainfall,1000.0,2500.0,mm,Requires continuous flooding; minimum 1000 mm without active irrigation.,IRRI Rice Knowledge Bank,http://www.knowledgebank.irri.org,Lowland flooded rice requires consistent water depth.,High,2025-05-15
+rice,soil_texture,,,text,"Heavy clay, clay loam, or silty clay soils with low water permeability.",ICAR - National Rice Research Institute,https://nrri.icar.gov.in,Sandy soils are highly unsuitable due to excessive leaching of nutrients.,High,2025-05-15
+rice,irrigation,,,text,Basin flooding required to maintain standing water unless rainfall is exceptionally high.,FAO Land & Water,https://www.fao.org,Water requirement ranges from 1200 mm to 2000 mm per crop cycle.,High,2025-05-15
+maize,pH,5.5,7.5,pH,Optimal pH is 6.0 to 7.0.,USDA NRCS,https://www.nrcs.usda.gov,Slightly acidic to neutral soils preferred; poor salinity tolerance.,High,2025-05-15
+maize,temperature,18.0,35.0,C,Optimal 20-30C; growth stops below 10C.,FAO AGPC,https://www.fao.org/ag/agp/agpc/doc/gallery/maize.htm,Frost-sensitive; warm temperatures accelerate tasseling.,High,2025-05-15
+maize,rainfall,500.0,800.0,mm,Evenly distributed rainfall of 500-800 mm during growing season.,ICAR - Indian Institute of Maize Research,https://iimr.icar.gov.in,Waterlogging at seedling stage reduces yield drastically.,High,2025-05-15
+maize,soil_texture,,,text,"Deep, fertile loams or sandy loams with excellent drainage.",USDA Extension,https://extension.unl.edu,Heavy clays cause root suffocation if saturated.,High,2025-05-15
+maize,irrigation,,,text,Supplemental irrigation during flowering and grain filling stages if rainfall is scarce.,USDA Extension,https://extension.unl.edu,Drought during silking drastically impacts grain yields.,High,2025-05-15
+grapes,pH,5.5,8.5,pH,Optimal range 6.0-7.0; highly adaptable.,FAO Horticultural Database,https://www.fao.org,Extremely high pH leads to iron chlorosis; acid soils limit vine vigor.,High,2025-05-15
+grapes,temperature,15.0,40.0,C,Optimal growing temperature is 25-32C.,FAO AGPC,https://www.fao.org,Frost below -2C kills green shoots; temperatures above 40C cause leaf scorch.,High,2025-05-15
+grapes,rainfall,400.0,1200.0,mm,Requires dry ripening periods; optimal annual rainfall is 500-800 mm.,FAO Horticultural Database,https://www.fao.org,Excessive rainfall during ripening causes berry splitting and fungal outbreaks.,High,2025-05-15
+grapes,soil_texture,,,text,"Gravelly loams, sandy loams, or well-drained volcanic soils.",UC Davis Viticulture,https://viticulture.ucdavis.edu,Highly sensitive to waterlogging; clay soils are generally avoided unless tiled.,High,2025-05-15
+grapes,irrigation,,,text,Regulated deficit irrigation (RDI) is preferred to improve grape quality.,UC Davis Viticulture,https://viticulture.ucdavis.edu,Over-irrigation leads to excessive vegetative growth and poor sugar development.,High,2025-05-15
+chickpea,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+kidneybeans,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+pigeonpeas,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+mothbeans,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+mungbean,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+blackgram,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+lentil,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+pomegranate,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+banana,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+mango,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+watermelon,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+muskmelon,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+apple,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+orange,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+papaya,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+coconut,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+cotton,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+jute,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15
+coffee,pH,5.5,7.5,pH,Optimal 6.0-7.0 as a general loam baseline.,UNVERIFIED,#,General academic crop baseline for placeholder compatibility.,Medium,2025-05-15

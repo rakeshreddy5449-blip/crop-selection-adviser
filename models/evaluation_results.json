@@ -1,0 +1,20 @@
+{
+    "random_forest": {
+        "accuracy": 0.9977272727272727,
+        "macro_f1": 0.997725851384388,
+        "cv_accuracy_mean": 0.996103896103896,
+        "cv_accuracy_std": 0.0037863323992501793
+    },
+    "svm": {
+        "accuracy": 0.990909090909091,
+        "macro_f1": 0.9909034055375519,
+        "cv_accuracy_mean": 0.9844155844155844,
+        "cv_accuracy_std": 0.004771733265162041
+    },
+    "ann": {
+        "accuracy": 0.975,
+        "macro_f1": 0.9748811243734806,
+        "seed_stability_acc_mean": 0.9803030303030305,
+        "seed_stability_acc_std": 0.005356869554443537
+    }
+}
