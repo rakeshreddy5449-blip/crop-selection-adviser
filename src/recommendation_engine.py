@@ -28,6 +28,10 @@ class RecommendationEngine:
     def recommend(self, farmer_inputs, location=None):
         warnings = []
         weather_info = None
+        normalized_inputs = {
+            str(key).strip().lower(): value
+            for key, value in farmer_inputs.items()
+        }
 
         # If location is provided, fetch weather as contextual data
         if location:
@@ -37,24 +41,62 @@ class RecommendationEngine:
             else:
                 # Check for conflicts between user inputs and retrieved weather data
                 for field in ["temperature", "humidity"]:
-                    user_val = farmer_inputs.get(field)
+                    user_val = normalized_inputs.get(field)
                     api_val = weather_info.get(field)
                     if user_val is not None and api_val is not None:
-                        if abs(float(user_val) - float(api_val)) > 0.01:
+                        try:
+                            has_difference = (
+                                abs(float(user_val) - float(api_val)) > 0.01
+                            )
+                        except (TypeError, ValueError, OverflowError):
+                            has_difference = False
+                        if has_difference:
                             warnings.append(f"User-provided {field}: {user_val} | Current external weather {field}: {api_val}. Difference detected; user-provided farm measurement was retained.")
 
         # Check for missing required features
-        missing_required = [f for f in self.feature_names if f not in farmer_inputs or farmer_inputs[f] is None]
+        missing_required = [
+            feature
+            for feature in self.feature_names
+            if normalized_inputs.get(feature.lower()) is None
+            or (
+                isinstance(normalized_inputs.get(feature.lower()), str)
+                and not normalized_inputs[feature.lower()].strip()
+            )
+        ]
         if missing_required:
             return {
                 "input_status": "INVALID",
                 "warnings": warnings + [f"Missing required inputs: {missing_required}. Cannot run predictions."],
+                "missing_inputs": missing_required,
                 "ranked_recommendations": [],
                 "weather_context": weather_info
             }
 
         # Prepare inputs
-        input_vals = [float(farmer_inputs[f]) for f in self.feature_names]
+        input_vals = []
+        invalid_inputs = []
+        for feature in self.feature_names:
+            value = normalized_inputs[feature.lower()]
+            try:
+                numeric_value = float(value)
+                if not np.isfinite(numeric_value):
+                    raise ValueError("The value must be finite.")
+                input_vals.append(numeric_value)
+            except (TypeError, ValueError, OverflowError):
+                invalid_inputs.append(feature)
+
+        if invalid_inputs:
+            return {
+                "input_status": "INVALID",
+                "warnings": warnings + [
+                    f"Inputs must be finite numbers: {invalid_inputs}. "
+                    "Cannot run predictions."
+                ],
+                "invalid_inputs": invalid_inputs,
+                "ranked_recommendations": [],
+                "weather_context": weather_info
+            }
+
         input_arr = np.array([input_vals])
 
         # Standard preprocess scaling for ANN
@@ -88,15 +130,29 @@ class RecommendationEngine:
             agreement_text = f"{(votes)}/3 models predict {crop}"
 
             # Agronomic rule-based check
-            ag_res = self.agronomic_engine.evaluate_crop(crop, farmer_inputs)
+            ag_res = self.agronomic_engine.evaluate_crop(crop, normalized_inputs)
 
             # Resolve category mapping based on evidence integrity
             if ag_res['overall_status'] == 'Unsuitable':
                 category = 'NOT RECOMMENDED'
                 why = f"Agronomic mismatch: {', '.join(ag_res['warnings'] or ['Input values do not meet acceptable limits.'])}"
-            elif ag_res['overall_status'] == 'Insufficient Information':
+            elif (
+                ag_res['overall_status'] == 'Insufficient Information'
+                or ag_res.get('unavailable_rules')
+                or ag_res.get('insufficient_evidence')
+                or ag_res.get('invalid_information')
+            ):
                 category = 'INSUFFICIENT INFORMATION'
-                why = "Model supports candidate, but insufficient localized data available to make an agronomic recommendation."
+                evidence_gaps = (
+                    ag_res.get('insufficient_evidence', [])
+                    + ag_res.get('unavailable_rules', [])
+                    + ag_res.get('invalid_information', [])
+                )
+                why = (
+                    "Model supports candidate, but crop-specific agronomic "
+                    "evidence is incomplete for: "
+                    f"{', '.join(dict.fromkeys(evidence_gaps)) or 'this crop'}."
+                )
             elif len(ag_res['missing_information']) > 0:
                 category = 'RECOMMENDED WITH CAUTION'
                 why = f"Agronomic check is baseline {ag_res['overall_status']}; missing key elements: {ag_res['missing_information']}"
@@ -112,6 +168,12 @@ class RecommendationEngine:
                 "recommendation_category": category,
                 "reasoning": why,
                 "missing_information": ag_res['missing_information'],
+                "unavailable_rules": ag_res.get('unavailable_rules', []),
+                "insufficient_evidence": ag_res.get('insufficient_evidence', []),
+                "invalid_information": ag_res.get('invalid_information', []),
+                "checks": ag_res.get('checks', []),
+                "supporting_reasons": ag_res.get('supporting_reasons', []),
+                "warnings": ag_res.get('warnings', []),
                 "sources": ag_res['sources']
             })
 

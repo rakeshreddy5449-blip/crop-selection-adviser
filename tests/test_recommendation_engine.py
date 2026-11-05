@@ -46,3 +46,70 @@ def test_suite_recommendation_engine():
     }
     res_extreme = engine.recommend(inputs_extreme)
     assert any(rec['recommendation_category'] == 'NOT RECOMMENDED' for rec in res_extreme['ranked_recommendations'])
+
+
+def test_recommendation_surfaces_unavailable_and_insufficient_agronomic_rules(
+    monkeypatch,
+):
+    engine = RecommendationEngine(
+        models_dir='models',
+        csv_path='reports/agronomic_requirements_sources.csv',
+    )
+    agronomic_result = {
+        'overall_status': 'Insufficient Information',
+        'warnings': [],
+        'missing_information': [],
+        'unavailable_rules': ['pH'],
+        'insufficient_evidence': ['pH'],
+        'invalid_information': [],
+        'checks': [{
+            'parameter': 'pH',
+            'assessment': 'Insufficient Information',
+            'reason': 'No verified rule is available.',
+        }],
+        'supporting_reasons': [],
+        'sources': [],
+    }
+    monkeypatch.setattr(
+        engine.agronomic_engine,
+        'evaluate_crop',
+        lambda crop, inputs: agronomic_result,
+    )
+    inputs = {
+        'N': 80, 'P': 40, 'K': 40,
+        'temperature': 25.0, 'humidity': 80.0, 'ph': 6.2,
+        'rainfall': 1500.0,
+    }
+
+    result = engine.recommend(inputs)
+
+    assert result['input_status'] == 'VALID'
+    assert set(result['model_predictions']) == {
+        'random_forest', 'svm', 'ann'
+    }
+    assert result['ranked_recommendations']
+    for recommendation in result['ranked_recommendations']:
+        assert recommendation['recommendation_category'] == (
+            'INSUFFICIENT INFORMATION'
+        )
+        assert recommendation['unavailable_rules'] == ['pH']
+        assert recommendation['insufficient_evidence'] == ['pH']
+        assert recommendation['checks'][0]['parameter'] == 'pH'
+
+
+def test_recommendation_rejects_non_finite_model_inputs():
+    engine = RecommendationEngine(
+        models_dir='models',
+        csv_path='reports/agronomic_requirements_sources.csv',
+    )
+    inputs = {
+        'N': 80, 'P': 40, 'K': 40,
+        'temperature': 25.0, 'humidity': 80.0, 'ph': float('nan'),
+        'rainfall': 1500.0,
+    }
+
+    result = engine.recommend(inputs)
+
+    assert result['input_status'] == 'INVALID'
+    assert result['invalid_inputs'] == ['ph']
+    assert result['ranked_recommendations'] == []
