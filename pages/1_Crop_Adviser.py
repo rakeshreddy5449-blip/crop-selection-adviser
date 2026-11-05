@@ -94,7 +94,10 @@ h1, h2, h3, h4 {
 def load_engine():
     return RecommendationEngine(
         models_dir=str(ROOT / "models"),
-        csv_path=str(ROOT / "reports" / "agronomic_requirements_sources.csv")
+        csv_path=str(ROOT / "reports" / "agronomic_requirements_sources.csv"),
+        research_csv_path=str(
+            ROOT / "reports" / "agronomic_evidence_research.csv"
+        )
     )
 
 st.title("🌾 AI Crop Adviser")
@@ -341,13 +344,13 @@ if "crop_result" in st.session_state:
                     expanded=(index == 1)
                 ):
 
-                    st.write(
-                        "**Agronomic Status:**",
-                        item["agronomic_status"]
-                    )
+                    st.write("**Agronomic Evidence Status:**", item["agronomic_status"])
+                    st.write("**Agronomic Suitability:**", item.get(
+                        "suitability_status", "Cannot Determine"
+                    ))
 
                     st.write(
-                        "**Model Agreement:**",
+                        "**Model Agreement (prediction only):**",
                         item["model_agreement"]
                     )
 
@@ -357,27 +360,64 @@ if "crop_result" in st.session_state:
                     )
 
                     if item.get("checks"):
-                        st.write("**Agronomic Evidence:**")
+                        st.info(
+                            "UNKNOWN means evidence was not verified. It is "
+                            "not a finding that the crop is unsuitable."
+                        )
+                        st.write("**Evidence by Parameter:**")
                         evidence_rows = []
                         for check in item["checks"]:
-                            if check.get("reference_available"):
+                            if check.get("source_verified"):
                                 reference = (
-                                    f"{check['source_name']}: "
-                                    f"{check['source_url']}"
+                                    f"{check.get('author_or_institution')}: "
+                                    f"{check.get('publication_title')} — "
+                                    f"{check.get('source_url')} "
+                                    f"({check.get('page_section_or_table')})"
                                 )
-                                reference_status = (
-                                    "Not independently verified"
-                                )
+                                claim = check.get("claim_or_requirement")
+                                claim_status = "Verified source claim"
                             else:
-                                reference = "No usable source reference"
-                                reference_status = "Unavailable"
+                                reference = (
+                                    f"Unverified reference: "
+                                    f"{check.get('source_name') or 'Unknown'} "
+                                    f"{check.get('source_url') or ''}"
+                                )
+                                claim = (
+                                    f"Unverified: "
+                                    f"{check.get('claim_or_requirement')}"
+                                    if check.get("claim_or_requirement")
+                                    else "UNKNOWN — evidence not verified"
+                                )
+                                claim_status = "Not verified"
                             evidence_rows.append({
                                 "Parameter": check["parameter"],
                                 "Farmer input": check["input"],
-                                "Assessment": check["assessment"],
-                                "Explanation": check["reason"],
-                                "Reference metadata": reference,
-                                "Reference status": reference_status,
+                                "Research register status": check.get(
+                                    "evidence_status", "UNKNOWN"
+                                ),
+                                "Effective evidence status": check.get(
+                                    "effective_evidence_status", "UNKNOWN"
+                                ),
+                                "Source content status": claim_status,
+                                "Suitability assessment": check["assessment"],
+                                "Verified claim": claim,
+                                "Source": reference,
+                                "Growing context": (
+                                    check.get("growing_conditions_context")
+                                    or "No verified claim available."
+                                ),
+                                "Source limitations": (
+                                    check.get("limitations")
+                                    or "None recorded."
+                                ),
+                                "Legacy data status": check.get(
+                                    "legacy_data_status"
+                                ),
+                                "Historical legacy data (not used)": (
+                                    str(check.get("legacy_reference"))
+                                    if check.get("legacy_reference")
+                                    else "None"
+                                ),
                             })
                         st.dataframe(
                             evidence_rows,
@@ -400,16 +440,31 @@ if "crop_result" in st.session_state:
                         for parameter in item["insufficient_evidence"]:
                             st.write("•", parameter)
 
-                    if item["sources"]:
-                        st.write(
-                            "**Reference metadata "
-                            "(not independently verified):**"
+                    if item.get("legacy_unverified"):
+                        st.caption(
+                            "Legacy requirements exist for "
+                            f"{', '.join(item['legacy_unverified'])}, but "
+                            "they are retained as historical reference only "
+                            "and do not determine suitability."
                         )
-                        for source in item["sources"]:
-                            st.write(
-                                f"• {source['source_name']}: "
-                                f"{source['source_url']}"
-                            )
+
+                    if item.get("legacy_conflicts"):
+                        st.warning(
+                            "Legacy numerical values conflict with the "
+                            "research register for: "
+                            f"{', '.join(item['legacy_conflicts'])}. "
+                            "They are retained for history and not used."
+                        )
+
+                    if item.get("research_validation_errors"):
+                        st.warning(
+                            "Research register validation issues were found; "
+                            "affected parameters are treated as UNKNOWN."
+                        )
+
+                    if item.get("agronomic_warnings"):
+                        for warning in item["agronomic_warnings"]:
+                            st.caption(warning)
 
         # Weather Information
         st.subheader("🌦️ Weather Context")

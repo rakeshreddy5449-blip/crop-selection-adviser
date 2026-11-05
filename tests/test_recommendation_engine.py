@@ -34,9 +34,9 @@ def test_suite_recommendation_engine():
     }
     res_no_opt = engine.recommend(inputs_no_opt)
     assert res_no_opt['input_status'] == 'VALID'
-    # Since optionals are missing, top recommendations should map to caution
+    # Unknown research evidence takes precedence over missing optional inputs.
     rec = res_no_opt['ranked_recommendations'][0]
-    assert rec['recommendation_category'] == 'RECOMMENDED WITH CAUTION'
+    assert rec['recommendation_category'] == 'INSUFFICIENT INFORMATION'
 
     # 4. Agronomically unsuitable candidate
     inputs_extreme = {
@@ -45,7 +45,10 @@ def test_suite_recommendation_engine():
         'rainfall': 1500.0
     }
     res_extreme = engine.recommend(inputs_extreme)
-    assert any(rec['recommendation_category'] == 'NOT RECOMMENDED' for rec in res_extreme['ranked_recommendations'])
+    assert all(
+        rec['recommendation_category'] == 'INSUFFICIENT INFORMATION'
+        for rec in res_extreme['ranked_recommendations']
+    )
 
 
 def test_recommendation_surfaces_unavailable_and_insufficient_agronomic_rules(
@@ -61,7 +64,9 @@ def test_recommendation_surfaces_unavailable_and_insufficient_agronomic_rules(
         'missing_information': [],
         'unavailable_rules': ['pH'],
         'insufficient_evidence': ['pH'],
+        'unknown_evidence': ['pH'],
         'invalid_information': [],
+        'suitability_status': 'Cannot Determine',
         'checks': [{
             'parameter': 'pH',
             'assessment': 'Insufficient Information',
@@ -94,7 +99,78 @@ def test_recommendation_surfaces_unavailable_and_insufficient_agronomic_rules(
         )
         assert recommendation['unavailable_rules'] == ['pH']
         assert recommendation['insufficient_evidence'] == ['pH']
+        assert recommendation['unknown_evidence'] == ['pH']
         assert recommendation['checks'][0]['parameter'] == 'pH'
+
+
+def test_unknown_evidence_keeps_ml_predictions_and_blocks_recommended():
+    engine = RecommendationEngine(
+        models_dir='models',
+        csv_path='reports/agronomic_requirements_sources.csv',
+    )
+    inputs = {
+        'N': 80, 'P': 40, 'K': 40,
+        'temperature': 25.0, 'humidity': 80.0, 'ph': 6.2,
+        'rainfall': 1500.0, 'soil_texture': 'Heavy clay',
+        'irrigation': 'Basin flooding',
+    }
+
+    result = engine.recommend(inputs)
+
+    assert result['input_status'] == 'VALID'
+    assert set(result['model_predictions']) == {
+        'random_forest', 'svm', 'ann'
+    }
+    assert result['ranked_recommendations']
+    for recommendation in result['ranked_recommendations']:
+        assert recommendation['recommendation_category'] == (
+            'INSUFFICIENT INFORMATION'
+        )
+        assert recommendation['agronomic_status'] == (
+            'Insufficient Information'
+        )
+        assert recommendation['suitability_status'] == 'Cannot Determine'
+        assert recommendation['unknown_evidence']
+
+
+def test_unknown_evidence_prevents_negative_category_even_with_unsuitable(
+    monkeypatch,
+):
+    engine = RecommendationEngine(
+        models_dir='models',
+        csv_path='reports/agronomic_requirements_sources.csv',
+    )
+    monkeypatch.setattr(
+        engine.agronomic_engine,
+        'evaluate_crop',
+        lambda crop, inputs: {
+            'overall_status': 'Unsuitable',
+            'suitability_status': 'Cannot Determine',
+            'warnings': ['Unsupported legacy threshold'],
+            'missing_information': [],
+            'unavailable_rules': [],
+            'insufficient_evidence': ['pH'],
+            'unknown_evidence': ['pH'],
+            'invalid_information': [],
+            'checks': [],
+            'supporting_reasons': [],
+            'sources': [],
+        },
+    )
+    inputs = {
+        'N': 80, 'P': 40, 'K': 40,
+        'temperature': 25.0, 'humidity': 80.0, 'ph': 6.2,
+        'rainfall': 1500.0,
+    }
+
+    result = engine.recommend(inputs)
+
+    assert result['ranked_recommendations']
+    assert all(
+        recommendation['recommendation_category']
+        == 'INSUFFICIENT INFORMATION'
+        for recommendation in result['ranked_recommendations']
+    )
 
 
 def test_recommendation_rejects_non_finite_model_inputs():

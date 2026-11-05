@@ -8,9 +8,18 @@ from agronomic_rules import AgronomicSuitabilityEngine
 from external_data import WeatherClient
 
 class RecommendationEngine:
-    def __init__(self, models_dir='models', csv_path='reports/agronomic_requirements_sources.csv'):
+    def __init__(
+        self,
+        models_dir='models',
+        csv_path='reports/agronomic_requirements_sources.csv',
+        research_csv_path='reports/agronomic_evidence_research.csv',
+    ):
         self.models_dir = models_dir
-        self.agronomic_engine = AgronomicSuitabilityEngine(csv_path)
+        self.agronomic_engine = AgronomicSuitabilityEngine(
+            csv_path=csv_path,
+            research_csv_path=research_csv_path,
+            metadata_path=os.path.join(models_dir, 'metadata.json'),
+        )
         self.weather_client = WeatherClient()
 
         # Load saved artifacts
@@ -132,27 +141,32 @@ class RecommendationEngine:
             # Agronomic rule-based check
             ag_res = self.agronomic_engine.evaluate_crop(crop, normalized_inputs)
 
-            # Resolve category mapping based on evidence integrity
-            if ag_res['overall_status'] == 'Unsuitable':
-                category = 'NOT RECOMMENDED'
-                why = f"Agronomic mismatch: {', '.join(ag_res['warnings'] or ['Input values do not meet acceptable limits.'])}"
-            elif (
-                ag_res['overall_status'] == 'Insufficient Information'
-                or ag_res.get('unavailable_rules')
-                or ag_res.get('insufficient_evidence')
-                or ag_res.get('invalid_information')
-            ):
+            evidence_gaps = list(dict.fromkeys(
+                ag_res.get('unknown_evidence', [])
+                + ag_res.get('insufficient_evidence', [])
+                + ag_res.get('unavailable_rules', [])
+                + ag_res.get('invalid_information', [])
+            ))
+
+            # Unknown or incomplete evidence cannot support either a positive
+            # or negative agronomic decision, regardless of model agreement.
+            if evidence_gaps or ag_res['overall_status'] == 'Insufficient Information':
                 category = 'INSUFFICIENT INFORMATION'
-                evidence_gaps = (
-                    ag_res.get('insufficient_evidence', [])
-                    + ag_res.get('unavailable_rules', [])
-                    + ag_res.get('invalid_information', [])
-                )
                 why = (
-                    "Model supports candidate, but crop-specific agronomic "
-                    "evidence is incomplete for: "
+                    "Model predictions are available, but agronomic "
+                    "suitability cannot be determined because evidence is "
+                    "unknown or incomplete for: "
                     f"{', '.join(dict.fromkeys(evidence_gaps)) or 'this crop'}."
                 )
+            elif ag_res.get('suitability_status') == 'Cannot Determine':
+                category = 'INSUFFICIENT INFORMATION'
+                why = (
+                    "Model predictions are available, but the available "
+                    "agronomic evidence does not establish suitability."
+                )
+            elif ag_res['overall_status'] == 'Unsuitable':
+                category = 'NOT RECOMMENDED'
+                why = f"Agronomic mismatch: {', '.join(ag_res['warnings'] or ['Input values do not meet acceptable limits.'])}"
             elif len(ag_res['missing_information']) > 0:
                 category = 'RECOMMENDED WITH CAUTION'
                 why = f"Agronomic check is baseline {ag_res['overall_status']}; missing key elements: {ag_res['missing_information']}"
@@ -165,15 +179,24 @@ class RecommendationEngine:
                 "ml_votes": votes,
                 "model_agreement": agreement_text,
                 "agronomic_status": ag_res['overall_status'],
+                "suitability_status": ag_res.get(
+                    'suitability_status', ag_res['overall_status']
+                ),
                 "recommendation_category": category,
                 "reasoning": why,
                 "missing_information": ag_res['missing_information'],
                 "unavailable_rules": ag_res.get('unavailable_rules', []),
                 "insufficient_evidence": ag_res.get('insufficient_evidence', []),
+                "unknown_evidence": ag_res.get('unknown_evidence', []),
+                "legacy_unverified": ag_res.get('legacy_unverified', []),
+                "legacy_conflicts": ag_res.get('legacy_conflicts', []),
                 "invalid_information": ag_res.get('invalid_information', []),
                 "checks": ag_res.get('checks', []),
                 "supporting_reasons": ag_res.get('supporting_reasons', []),
-                "warnings": ag_res.get('warnings', []),
+                "agronomic_warnings": ag_res.get('warnings', []),
+                "research_validation_errors": ag_res.get(
+                    'research_validation_errors', []
+                ),
                 "sources": ag_res['sources']
             })
 
