@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="128" viewBox="0 0 560 128" role="img" aria-labelledby="title description">
+  <title id="title">CropWise AI</title>
+  <desc id="description">Smart Agricultural Intelligence</desc>
+  <rect x="2" y="2" width="556" height="124" rx="22" fill="#EAF5EC"/>
+  <circle cx="64" cy="64" r="42" fill="#176B3A"/>
+  <path d="M66 91V57" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-width="5"/>
+  <path d="M66 65C43 63 36 49 39 34c17-1 31 7 32 25" fill="#FFFFFF"/>
+  <path d="M66 58c3-20 17-28 34-27 2 17-7 31-31 34" fill="#CFE9D3"/>
+  <text x="126" y="62" fill="#123D2B" font-family="Arial, Helvetica, sans-serif" font-size="37" font-weight="700">CropWise AI</text>
+  <text x="128" y="91" fill="#526456" font-family="Arial, Helvetica, sans-serif" font-size="19">Smart Agricultural Intelligence</text>
+</svg>
